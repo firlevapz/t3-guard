@@ -3,8 +3,8 @@ import os
 import sys
 import django
 
-if __name__ == '__main__' and len(sys.argv) > 2:
 
+if __name__ == '__main__' and len(sys.argv) > 2:
     cmd = sys.argv[1]
     if cmd == 'old' or cmd == 'add':
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
