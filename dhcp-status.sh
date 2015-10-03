@@ -1,8 +1,13 @@
 #!/bin/bash
 
 LOGFILE=/home/pi/doorguard/dhcp-log.txt
-BASEDIR=$(dirname $0)
+PIPE=/tmp/doorguard_dhcp_pipe
 
-echo $@ >> $LOGFILE
+echo $@ >> $LOGFILE  # write to logfile, just for logging
 
-$BASEDIR/dhcp-wake-device.py $@ &
+if [[ ! -p $PIPE ]]; then
+    # no checker-running to read from pipe...
+    exit 0;
+fi
+
+echo $@ >> $PIPE & 
