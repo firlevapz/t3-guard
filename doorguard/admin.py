@@ -2,8 +2,13 @@ from django.contrib import admin
 
 from .models import Config, Person, Device, Log
 
-admin.site.register(Config)
 admin.site.register(Person)
+
+@admin.register(Config)
+class ConfigAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'enabled')
+    list_per_page = 30
+    list_filter = ('config_type',)
 
 @admin.register(Log)
 class LogAdmin(admin.ModelAdmin):

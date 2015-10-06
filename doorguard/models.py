@@ -3,13 +3,21 @@ from django.db import models
 
 class Config(models.Model):
     CONFIG_TYPES = (
-        ('ALARM', 'Alarm enabled'),
+        ('ALARM', 'Alarm-Type'),
         ('EMAIL', 'Email address'),
+        ('CHECKER', 'Configuration for checker.py'),
     )
     config_type = models.CharField(max_length=10, choices=CONFIG_TYPES)
-    value = models.CharField(max_length=30, unique=True)
+    value = models.CharField(max_length=100, blank=True)
+    name = models.CharField(max_length=100, blank=True)
     enabled = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ("config_type", "value")
+        ordering = ['config_type', 'name', 'value']
+
+    def __str__(self):
+        return '{}, {}:{}'.format(self.config_type, self.name, self.value)
 
 class Person(models.Model):
     name = models.CharField(max_length=30, unique=True)

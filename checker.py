@@ -8,24 +8,44 @@ import RPi.GPIO as GPIO
 import django
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
+from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
 from doorguard.models import Device, Log, Config
 django.setup()
 
 check_pin = 7   # GPIO-Pin nr to check on raspi
+try:
+    check_pin = int(Config.objects.get(config_type='CHECKER', name='check_pin').value)
+except ObjectDoesNotExist:
+    pass
 
-device_wait = 10*60  # each 10 minutes check for devices
+device_check_wait = 10*60  # each 10 minutes check for devices
+try:
+    device_check_wait = int(Config.objects.get(config_type='CHECKER', name='device_check_wait').value)
+except ObjectDoesNotExist:
+    pass
+
 ping_retry = 3   # how often try to ping device before set inactive
-door_wait = 2 # check door every 2 seconds
+try:
+    ping_retry = int(Config.objects.get(config_type='CHECKER', name='ping_retry').value)
+except ObjectDoesNotExist:
+    pass
+
+door_check_wait = 2 # check door every 2 seconds
+try:
+    door_check_wait = int(Config.objects.get(config_type='CHECKER', name='door_check_wait').value)
+except ObjectDoesNotExist:
+    pass
 
 pipe_name = '/tmp/doorguard_dhcp_pipe'
 
 stop_threads = threading.Event()    # threading event to stop all threads
 
+
 def check_devices():
     while not stop_threads.isSet():
-        devices = Device.objects.all()  # get all current devices, but only at first run!
+        devices = Device.objects.all()  # get all current devices
         for d in devices:
             for i in range(ping_retry):
                 ret = subprocess.call("ping -c 1 %s" % d.ip,
@@ -41,7 +61,7 @@ def check_devices():
                 d.save()
                 l = Log(device=d, status=is_home, log_type='DE', text='(checker)')
                 l.save()
-        time.sleep(device_wait)
+        time.sleep(device_check_wait)
 
 
 def check_door():
@@ -62,11 +82,26 @@ def check_door():
                 l = Log(log_type='AL')
                 l.save()
 
-                #send_mail('Doorguard ALARM', 'Alarm Triggered!!!', 'from@example.com',
-                #    ['firlevapz@gmail.com'], fail_silently=False)
+                try:
+                    Config.objects.get(config_type='ALARM', value='email', enabled=True)
+                    for c in Config.objects.filter(config_type='EMAIL'):
+                        send_mail(
+                            'Doorguard ALARM',
+                            'Alarm Triggered!!!',
+                            settings.DEFAULT_FROM_EMAIL,
+                            [c.value],
+                            fail_silently=True
+                        )
+                except ObjectDoesNotExist:
+                    pass # email sending disabled
 
+                try:
+                    Config.objects.get(config_type='ALARM', value='sound', enabled=True)
+                    # do some crazy shitty sound action!!!
+                except ObjectDoesNotExist:
+                    pass # sound action disabled
 
-        time.sleep(door_wait)
+        time.sleep(door_check_wait)
 
 
 def dhcp_pipe_reader():
@@ -106,8 +141,8 @@ if __name__ == '__main__':
     dhcp_thread.daemon = True
     dhcp_thread.start()
 
-    print('Checker started...')
-    print('Press <Ctrl+C> to end')
+    # print('Checker started...')
+    # print('Press <Ctrl+C> to end')
 
     try:
         if device_thread.is_alive():
@@ -125,4 +160,4 @@ if __name__ == '__main__':
         pass
 
     GPIO.cleanup()
-    print('Cleanup finished')
+    # print('Cleanup finished')
