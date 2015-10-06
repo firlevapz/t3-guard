@@ -14,4 +14,3 @@ def index(request):
             'last_door_opened': last_door_opened
         }
     )
-

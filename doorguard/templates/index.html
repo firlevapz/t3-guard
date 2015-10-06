@@ -18,7 +18,7 @@
     <link href="{% static 'css/bootstrap-theme.min.css' %}" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="theme.css" rel="stylesheet">
+    <link href="{% static 'css/theme.css' %}" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -39,7 +39,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">Doorguard</a>
+          <a class="navbar-brand" href="/">Doorguard </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -53,38 +53,36 @@
     <div class="container theme-showcase" role="main">
 
       <!-- Main jumbotron for a primary marketing message or call to action -->
-        <div class="page-header">
-      </div>
     <div class="page-header">
         {% for d in devices %}
               <button type="button" class="btn btn-sm {% if d.is_home %}btn-success{% else %}btn-warning{% endif %}">
-                  {{ d }} is {% if d.is_home %}home{% else %}away{% endif %}
-                since {{ d.modified }} ({{ d.modified|timesince }})
+                  {{ d.owner.name }} is {% if d.is_home %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
+                since {{ d.modified|timesince }} ({{ d.modified }})
               </button>
         {% endfor %}
       </div>
 
 
 
-      <div class="page-header">
-        <h2>Recent logs</h2>
-      </div>
       <div class="row">
         <div class="col-sm-6">
+          <h3>Device Logs</h3>
             <div class="list-group">
                 {% for log in last_logs %}
-                    <span class="list-group-item {% if log.status %}label-success{% else %}label-warning{% endif %}">
-                        {{ log }}
-                        <small>at {{ log.created }} ({{ log.created|timesince }})</small>
+                    <span class="list-group-item {% if log.status %} list-group-item-success{% else %} list-group-item-warning{% endif %}">
+                        {{ log.device }}
+                        {% if log.status %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
+                        - <small>{{ log.created }} ({{ log.created|timesince }})</small>
                     </span>
                 {% endfor %}
             </div>
         </div><!-- /.col-sm-4 -->
         <div class="col-sm-6">
+          <h3>Door Logs</h3>
           <div class="list-group">
               {% for d in last_door_opened %}
                 <span class="list-group-item ">
-                    door opened at {{ d.created }} ({{ d.created|timesince }})
+                  <span class="glyphicon glyphicon-book" aria-hidden="true"></span> door opened at {{ d.created }} ({{ d.created|timesince }})
                 </span>
               {% endfor %}
           </div>

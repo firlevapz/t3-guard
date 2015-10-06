@@ -1,5 +1,16 @@
 from django.db import models
 
+
+class Config(models.Model):
+    CONFIG_TYPES = (
+        ('ALARM', 'Alarm enabled'),
+        ('EMAIL', 'Email address'),
+    )
+    config_type = models.CharField(max_length=10, choices=CONFIG_TYPES)
+    value = models.CharField(max_length=30, unique=True)
+    enabled = models.BooleanField(default=False)
+
+
 class Person(models.Model):
     name = models.CharField(max_length=30, unique=True)
 
@@ -9,7 +20,7 @@ class Person(models.Model):
 class Device(models.Model):
     name = models.CharField(max_length=50, unique=True)
     owner = models.ForeignKey(Person, null=True, blank=True)
-    ip = models.GenericIPAddressField(protocol='ipv4')
+    ip = models.GenericIPAddressField(protocol='ipv4', unique=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     is_home = models.BooleanField(default=False)

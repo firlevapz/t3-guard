@@ -3,9 +3,15 @@ import os
 import subprocess
 import time
 import threading
-import django
 import RPi.GPIO as GPIO
+
+import django
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
+from doorguard.models import Device, Log, Config
+django.setup()
 
 check_pin = 7   # GPIO-Pin nr to check on raspi
 
@@ -55,7 +61,10 @@ def check_door():
                 # Door opened and nobody at home!
                 l = Log(log_type='AL')
                 l.save()
-                #print('ALAAARM')
+
+                #send_mail('Doorguard ALARM', 'Alarm Triggered!!!', 'from@example.com',
+                #    ['firlevapz@gmail.com'], fail_silently=False)
+
 
         time.sleep(door_wait)
 
@@ -85,10 +94,6 @@ def dhcp_pipe_reader():
 
 
 if __name__ == '__main__':
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
-    from doorguard.models import Device, Log
-    django.setup()
-
     device_thread = threading.Thread(target=check_devices)
     device_thread.daemon = True
     device_thread.start()

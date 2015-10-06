@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from .models import Person, Device, Log
+from .models import Config, Person, Device, Log
 
+admin.site.register(Config)
 admin.site.register(Person)
 
 @admin.register(Log)

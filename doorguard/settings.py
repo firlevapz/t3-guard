@@ -14,7 +14,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+PRIVATE_SETTINGS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings_private.py')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -92,7 +92,7 @@ TIME_ZONE = 'CET'
 
 USE_I18N = True
 
-DATETIME_FORMAT = 'j. N Y, H:i'
+DATETIME_FORMAT = 'j. N y, H:i'
 
 #USE_L10N = True
 
@@ -103,3 +103,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'webmaster@localhost'
+EMAIL_HOST_PASSWORD = ''
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+DEFAULT_TO_EMAIL = ''
+
+
+if os.path.isfile(PRIVATE_SETTINGS):
+    exec(compile(open(PRIVATE_SETTINGS, "rb").read(), PRIVATE_SETTINGS, 'exec'), globals(), locals())
