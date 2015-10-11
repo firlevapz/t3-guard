@@ -8,12 +8,12 @@ class Config(models.Model):
         ('CHECKER', 'Configuration for checker.py'),
     )
     config_type = models.CharField(max_length=10, choices=CONFIG_TYPES)
-    value = models.CharField(max_length=100, blank=True)
     name = models.CharField(max_length=100, blank=True)
-    enabled = models.BooleanField(default=False)
+    value = models.CharField(max_length=100, blank=True)
+    enabled = models.BooleanField(default=True)
 
     class Meta:
-        unique_together = ("config_type", "value")
+        unique_together = ("config_type", "name")
         ordering = ['config_type', 'name', 'value']
 
     def __str__(self):

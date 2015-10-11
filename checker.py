@@ -15,28 +15,13 @@ from doorguard.models import Device, Log, Config
 django.setup()
 
 check_pin = 7   # GPIO-Pin nr to check on raspi
-try:
-    check_pin = int(Config.objects.get(config_type='CHECKER', name='check_pin').value)
-except ObjectDoesNotExist:
-    pass
+
+config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
-try:
-    device_check_wait = int(Config.objects.get(config_type='CHECKER', name='device_check_wait').value)
-except ObjectDoesNotExist:
-    pass
-
 ping_retry = 3   # how often try to ping device before set inactive
-try:
-    ping_retry = int(Config.objects.get(config_type='CHECKER', name='ping_retry').value)
-except ObjectDoesNotExist:
-    pass
-
-door_check_wait = 2 # check door every 2 seconds
-try:
-    door_check_wait = int(Config.objects.get(config_type='CHECKER', name='door_check_wait').value)
-except ObjectDoesNotExist:
-    pass
+door_check_wait = 1 # check door every 2 seconds
+alarm_delay = 10 # seconds to delay alarm from opening the door
 
 pipe_name = '/tmp/doorguard_dhcp_pipe'
 
@@ -47,7 +32,7 @@ def check_devices():
     while not stop_threads.isSet():
         devices = Device.objects.all()  # get all current devices
         for d in devices:
-            for i in range(ping_retry):
+            for i in range(int(ping_retry)):
                 ret = subprocess.call("ping -c 1 %s" % d.ip,
                     shell=True,
                     stdout=open('/dev/null', 'w'),
@@ -62,6 +47,36 @@ def check_devices():
                 l = Log(device=d, status=is_home, log_type='DE', text='(checker)')
                 l.save()
         time.sleep(device_check_wait)
+
+
+def trigger_alarm():
+    # Alarm delay then check again
+    time.sleep(alarm_delay)
+    # Check again if someone is home now
+    if Device.objects.filter(is_home=True).count() > 0:
+        return # cancel alarm
+
+    l = Log(log_type='AL')
+    l.save()
+
+    try:
+        Config.objects.get(config_type='ALARM', name='email', enabled=True)
+        for c in Config.objects.filter(config_type='EMAIL'):
+            send_mail(
+                'Doorguard ALARM',
+                'Alarm Triggered!!!',
+                settings.DEFAULT_FROM_EMAIL,
+                [c.name],
+                fail_silently=True
+            )
+    except ObjectDoesNotExist:
+        pass # email sending disabled
+
+    try:
+        Config.objects.get(config_type='ALARM', name='sound', enabled=True)
+        # do some crazy shitty sound action!!!
+    except ObjectDoesNotExist:
+        pass # sound action disabled
 
 
 def check_door():
@@ -79,27 +94,11 @@ def check_door():
 
             if curr_state == 0 and Device.objects.filter(is_home=True).count() == 0:
                 # Door opened and nobody at home!
-                l = Log(log_type='AL')
-                l.save()
+                alarm_thread = threading.Thread(target=trigger_alarm)
+                alarm_thread.daemon = True
+                alarm_thread.start()
 
-                try:
-                    Config.objects.get(config_type='ALARM', value='email', enabled=True)
-                    for c in Config.objects.filter(config_type='EMAIL'):
-                        send_mail(
-                            'Doorguard ALARM',
-                            'Alarm Triggered!!!',
-                            settings.DEFAULT_FROM_EMAIL,
-                            [c.value],
-                            fail_silently=True
-                        )
-                except ObjectDoesNotExist:
-                    pass # email sending disabled
-
-                try:
-                    Config.objects.get(config_type='ALARM', value='sound', enabled=True)
-                    # do some crazy shitty sound action!!!
-                except ObjectDoesNotExist:
-                    pass # sound action disabled
+            Device.objects.filter(is_home=True).order_by('-modified')
 
         time.sleep(door_check_wait)
 
@@ -145,14 +144,13 @@ if __name__ == '__main__':
     # print('Press <Ctrl+C> to end')
 
     try:
-        if device_thread.is_alive():
-            device_thread.join()
-        if door_thread.is_alive():
-            door_thread.join()
-        if dhcp_thread.is_alive():
-            dhcp_thread.join()
-    except KeyboardInterrupt:
-        print('Keyboard Interrupt received, cleaning up...')
+        while True:
+            # Load configuration-settings from DB
+            for c in Config.objects.filter(config_type='CHECKER', enabled=True):
+                locals()[c.name] = float(c.value)
+            time.sleep(config_reload)
+    except (KeyboardInterrupt, SystemExit):
+        print('Interrupt received, cleaning up...')
 
     try:
         os.unlink(pipe_name)
