@@ -61,7 +61,7 @@ def trigger_alarm():
 
     try:
         Config.objects.get(config_type='ALARM', name='email', enabled=True)
-        for c in Config.objects.filter(config_type='EMAIL'):
+        for c in Config.objects.filter(config_type='EMAIL', enabled=True):
             send_mail(
                 'Doorguard ALARM',
                 'Alarm Triggered!!!',
