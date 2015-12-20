@@ -4,7 +4,6 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="refresh" content="60">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
@@ -77,33 +76,8 @@
       </div>
 
       <div class="row">
-        <div class="col-sm-6">
-          <h3>Device Logs</h3>
-            <div class="list-group">
-                {% for log in last_logs %}
-                    <span class="list-group-item {% if log.status %} list-group-item-success{% else %} list-group-item-warning{% endif %}">
-                        {{ log.device }}
-                        {% if log.status %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
-                        - <small>{{ log.created }} ({{ log.created|timesince }})</small>
-                    </span>
-                {% endfor %}
-            </div>
-        </div><!-- /.col-sm-4 -->
-        <div class="col-sm-6">
-          <h3>Door Logs</h3>
-          <div class="list-group">
-              {% for d in last_door_opened %}
-                <span class="list-group-item ">
-                  <span class="glyphicon glyphicon-book" aria-hidden="true"></span> door opened at {{ d.created }} ({{ d.created|timesince }})
-                </span>
-              {% endfor %}
-          </div>
-        </div><!-- /.col-sm-4 -->
-      </div>
-
-      <div class="row">
-        <h3><a href="{% url 'motion-details' %}">Motion detected</a></h3>
-        <div id="tester" style="width:400px;height:250px;"></div>
+        <h3>Motion detected</h3>
+        <div id="tester" style="width:700px;height:300px;"></div>
       </div>
 
     </div> <!-- /container -->
@@ -120,7 +94,12 @@
                 //marker: { size: 8 }
             }],
             {
-                margin: { t: 0 }
+                margin: { t: 50 },
+                xaxis: {
+                  type: 'date',
+                  range: ['{{ range_start }}', '{{ range_end }}']
+                }
+                //xaxis: { range: [10, 30] },
             }
         );
     </script>

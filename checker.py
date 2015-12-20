@@ -11,17 +11,18 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
-from doorguard.models import Device, Log, Config
 django.setup()
+from doorguard.models import Device, Log, Config
 
 check_pin = 7   # GPIO-Pin nr to check on raspi
-
+motion_pin = 11 # GPIO-Pin for motion detection
 config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
 ping_retry = 3   # how often try to ping device before set inactive
 door_check_wait = 1 # check door every 2 seconds
 alarm_delay = 10 # seconds to delay alarm from opening the door
+motion_check_wait = 3 # check door every 2 seconds
 
 pipe_name = '/tmp/doorguard_dhcp_pipe'
 
@@ -98,9 +99,29 @@ def check_door():
                 alarm_thread.daemon = True
                 alarm_thread.start()
 
-            Device.objects.filter(is_home=True).order_by('-modified')
-
+#            Device.objects.filter(is_home=True).order_by('-modified')
         time.sleep(door_check_wait)
+
+
+def check_motion():
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(motion_pin, GPIO.IN)
+
+    while not stop_threads.isSet():
+        curr_state = GPIO.input(motion_pin)
+        if curr_state:
+            l = Log(status=curr_state, log_type='MO')
+            l.save()
+
+#            if curr_state == 0 and Device.objects.filter(is_home=True).count() == 0:
+                # Door opened and nobody at home!
+#                alarm_thread = threading.Thread(target=trigger_alarm)
+#                alarm_thread.daemon = True
+#                alarm_thread.start()
+
+ #           Device.objects.filter(is_home=True).order_by('-modified')
+
+        time.sleep(motion_check_wait)
 
 
 def dhcp_pipe_reader():
@@ -139,6 +160,10 @@ if __name__ == '__main__':
     dhcp_thread = threading.Thread(target=dhcp_pipe_reader)
     dhcp_thread.daemon = True
     dhcp_thread.start()
+    
+    motion_thread = threading.Thread(target=check_motion)
+    motion_thread.daemon = True
+    motion_thread.start()
 
     # print('Checker started...')
     # print('Press <Ctrl+C> to end')
@@ -155,7 +180,7 @@ if __name__ == '__main__':
     try:
         os.unlink(pipe_name)
     except:
-        pass
+        print('failed to remove pipe')
 
     GPIO.cleanup()
     # print('Cleanup finished')

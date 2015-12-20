@@ -1,8 +1,11 @@
 from django.shortcuts import render_to_response
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from .models import Device, Log, Config
+
 
 def index(request):
     last_logs = Log.objects.filter(log_type__exact='DE')[:10]
@@ -18,8 +21,56 @@ def index(request):
     except Config.DoesNotExist:
         sound_alarm = False
 
+    start = timezone.now() - timezone.timedelta(days=1)
+    motion_time = []
+    motion_count = []
+    delta = timezone.timedelta(minutes=15)
+
+    while start < timezone.now():
+        cnt = Log.objects.filter(log_type__exact='MO', status=True, created__range=[start, start+delta]).count()
+        motion_time.append(start)
+        motion_count.append(cnt)
+
+        start += delta
+#    motion_datestmp = last_motion
+    motion_time = mark_safe([timezone.localtime(m).strftime('%Y-%m-%d %H:%M:%S') for m in motion_time].__str__())
+    #motion_state = mark_safe([ int(m.status) for m in last_motions].__str__())
+    #motion_time = mark_safe(motion_time.__str__())
+    motion_count = mark_safe(motion_count.__str__())
+
     return render_to_response(
         'index.html',
+        locals()
+    )
+
+
+def motion_details(request, days=3):
+    devices = Device.objects.all()
+
+    minutes = 10
+
+    start = timezone.now() - timezone.timedelta(days=days)
+    motion_time = []
+    motion_count = []
+    delta = timezone.timedelta(minutes=minutes)
+
+    while start < timezone.now():
+        cnt = Log.objects.filter(log_type__exact='MO', status=True, created__range=[start, start+delta]).count()
+        motion_time.append(start)
+        motion_count.append(cnt)
+
+        start += delta
+#    motion_datestmp = last_motion
+    motion_time = mark_safe([timezone.localtime(m).strftime('%Y-%m-%d %H:%M:%S') for m in motion_time].__str__())
+    #motion_state = mark_safe([ int(m.status) for m in last_motions].__str__())
+    #motion_time = mark_safe(motion_time.__str__())
+    motion_count = mark_safe(motion_count.__str__())
+
+    range_start = mark_safe(timezone.localtime(timezone.now()-timezone.timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'))
+    range_end = mark_safe(timezone.localtime(timezone.now()).strftime('%Y-%m-%d %H:%M:%S'))
+
+    return render_to_response(
+        'motions.html',
         locals()
     )
 

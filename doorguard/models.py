@@ -45,6 +45,7 @@ class Log(models.Model):
         ('AL', 'Alarm'),
         ('DE', 'Device'),
         ('DO', 'Door'),
+        ('MO', 'Motion'),
     )
 
     log_type = models.CharField(max_length=10, choices=LOG_TYPES)
@@ -72,6 +73,11 @@ class Log(models.Model):
                 s = '{} went away...'.format(self.device)
         elif self.log_type == 'AL':
             s = 'ALAAAARM ALARM ALARM!!!'
+        elif self.log_type == 'MO':
+            if self.status:
+                s = 'Motion detected'
+            else:
+                s = 'Motion ended'
 
         if self.text:
             s = s + ' ' + self.text
