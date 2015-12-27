@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 import os
 import subprocess
 import time
@@ -12,10 +12,12 @@ from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
 django.setup()
-from doorguard.models import Device, Log, Config
+from doorguard.models import Device, Log, Config, Temperature, Humidity
 
 check_pin = 7   # GPIO-Pin nr to check on raspi
 motion_pin = 11 # GPIO-Pin for motion detection
+temp_pin = 12 # GPIO-Pin for temperature sensor
+temp_wait = 60
 config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
@@ -28,8 +30,11 @@ pipe_name = '/tmp/doorguard_dhcp_pipe'
 
 stop_threads = threading.Event()    # threading event to stop all threads
 
+GPIO.setmode(GPIO.BOARD) # set mode for accessing GPIO pins
+
 
 def check_devices():
+    """Checks which devices are at home"""
     while not stop_threads.isSet():
         devices = Device.objects.all()  # get all current devices
         for d in devices:
@@ -51,6 +56,7 @@ def check_devices():
 
 
 def trigger_alarm():
+    """Sends alarm signal (either e-mail or siren)"""
     # Alarm delay then check again
     time.sleep(alarm_delay)
     # Check again if someone is home now
@@ -81,7 +87,7 @@ def trigger_alarm():
 
 
 def check_door():
-    GPIO.setmode(GPIO.BOARD)
+    """Checks the door-state with magnetic switch"""
     GPIO.setup(check_pin, GPIO.IN)
     old_state = GPIO.input(check_pin)
 
@@ -104,7 +110,7 @@ def check_door():
 
 
 def check_motion():
-    GPIO.setmode(GPIO.BOARD)
+    """Checks motions in the room with IR-detector"""
     GPIO.setup(motion_pin, GPIO.IN)
 
     while not stop_threads.isSet():
@@ -113,6 +119,7 @@ def check_motion():
             l = Log(status=curr_state, log_type='MO')
             l.save()
 
+#           could trigger also alarm here if no phone is present
 #            if curr_state == 0 and Device.objects.filter(is_home=True).count() == 0:
                 # Door opened and nobody at home!
 #                alarm_thread = threading.Thread(target=trigger_alarm)
@@ -124,7 +131,26 @@ def check_motion():
         time.sleep(motion_check_wait)
 
 
+def log_temp():
+    """Measure temperature and humidity"""
+    import Adafruit_DHT
+    GPIO.setup(temp_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    while not stop_threads.isSet():
+        # hard coded nr 18 because of other numbering in Adafruit
+        humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, 18)
+        t = Temperature(value=temperature)
+        t.save()
+
+        h = Humidity(value=humidity)
+        h.save()
+
+        time.sleep(temp_wait)
+
+
+
 def dhcp_pipe_reader():
+    """Checks for new DHCP-registration of devices"""
     if not os.path.exists(pipe_name):
         os.mkfifo(pipe_name)
 
@@ -149,6 +175,7 @@ def dhcp_pipe_reader():
 
 
 if __name__ == '__main__':
+    # Start different threads
     device_thread = threading.Thread(target=check_devices)
     device_thread.daemon = True
     device_thread.start()
@@ -160,10 +187,14 @@ if __name__ == '__main__':
     dhcp_thread = threading.Thread(target=dhcp_pipe_reader)
     dhcp_thread.daemon = True
     dhcp_thread.start()
-    
+
     motion_thread = threading.Thread(target=check_motion)
     motion_thread.daemon = True
     motion_thread.start()
+
+    temp_thread = threading.Thread(target=log_temp)
+    temp_thread.daemon = True
+    temp_thread.start()
 
     # print('Checker started...')
     # print('Press <Ctrl+C> to end')

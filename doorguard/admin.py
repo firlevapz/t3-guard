@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Config, Person, Device, Log
+from .models import Config, Person, Device, Log, Temperature, Humidity
 
 admin.site.register(Person)
 
@@ -24,3 +24,11 @@ class DeviceAdmin(admin.ModelAdmin):
         form = super(DeviceAdmin, self).get_form(request, obj, **kwargs)
         form.base_fields['ip'].initial = request.META['REMOTE_ADDR']
         return form
+
+@admin.register(Temperature)
+class TemperatureAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'timestamp')
+
+@admin.register(Humidity)
+class HumidityAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'timestamp')

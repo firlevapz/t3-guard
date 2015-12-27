@@ -1,0 +1,12 @@
+[Unit]
+Description=Doorguard web frontend which listens to specified port
+
+[Service]
+ExecStart=/home/pi/doorguard/server.sh
+User=pi
+Restart=on-failure
+SuccessExitStatus=3 4
+RestartForceExitStatus=3 4
+
+[Install]
+WantedBy=multi-user.target

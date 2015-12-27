@@ -40,6 +40,28 @@ class Device(models.Model):
             return '{}'.format(self.name)
 
 
+class Temperature(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    value = models.FloatField()
+
+    def __str__(self):
+        return '%f' % self.value
+
+    class Meta:
+        ordering = ['-timestamp']
+
+
+class Humidity(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    value = models.FloatField()
+
+    def __str__(self):
+        return '%f' % self.value
+
+    class Meta:
+        ordering = ['-timestamp']
+
+
 class Log(models.Model):
     LOG_TYPES = (
         ('AL', 'Alarm'),
