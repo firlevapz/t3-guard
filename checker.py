@@ -17,7 +17,7 @@ from doorguard.models import Device, Log, Config, Temperature, Humidity
 check_pin = 7   # GPIO-Pin nr to check on raspi
 motion_pin = 11 # GPIO-Pin for motion detection
 temp_pin = 12 # GPIO-Pin for temperature sensor
-temp_wait = 60
+temp_wait = 300
 config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
@@ -111,7 +111,7 @@ def check_door():
 
 def check_motion():
     """Checks motions in the room with IR-detector"""
-    GPIO.setup(motion_pin, GPIO.IN)
+    GPIO.setup(motion_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     while not stop_threads.isSet():
         curr_state = GPIO.input(motion_pin)

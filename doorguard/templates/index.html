@@ -47,19 +47,18 @@
           <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
             <li><a href="/admin">Admin</a></li>
+          </ul>
+          <div style="margin-top:10px; float:right">
             {% if request.user.is_authenticated %}
-              <li>
                 <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'email' %}').done(function(){location.reload()}); ">
                   <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
                 </button>
-              </li>
-              <li>
                 <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'sound' %}').done(function(){location.reload()});">
                   <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
                 </button>
-              </li>
             {% endif %}
-          </ul>
+            <span>T: {{ curr_temp }} °C</span>
+          </div>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
@@ -102,15 +101,56 @@
       </div>
 
       <div class="row">
+        <div class="col-sm-6">
+        <h3><a href="{% url 'temperature-details' %}">Temperature</a></h3>
+        <div id="temperature" style="width:350px;height:250px;"></div>
+        </div>
+
+        <div class="col-sm-6">
+        <h3><a href="{% url 'humidity-details' %}">Humidity</a></h3>
+        <div id="humidity" style="width:350px;height:250px;"></div>
+        </div>
+      </div>
+
+      <div class="row">
         <h3><a href="{% url 'motion-details' %}">Motion detected</a></h3>
-        <div id="tester" style="width:400px;height:250px;"></div>
+        <!--<div id="motion" style="width:400px;height:250px;"></div>-->
       </div>
 
     </div> <!-- /container -->
 
     <!-- Plotly scripting -->
     <script>
-        TESTER = document.getElementById('tester');
+        TESTER = document.getElementById('temperature');
+        Plotly.plot( TESTER,
+            [{
+                x: {{ temp_time }},
+                y: {{ temp_values }},
+                //type: 'scatter',
+                //mode: 'markers',
+                //marker: { size: 8 }
+            }],
+            {
+                margin: { t: 20 }
+            }
+        );
+
+        TESTER = document.getElementById('humidity');
+        Plotly.plot( TESTER,
+            [{
+                x: {{ humidity_time }},
+                y: {{ humidity_values }},
+                //type: 'scatter',
+                //mode: 'markers',
+                //marker: { size: 8 }
+            }],
+            {
+                margin: { t: 20 }
+            }
+        );
+
+        /*
+        TESTER = document.getElementById('motion');
         Plotly.plot( TESTER,
             [{
                 x: {{ motion_time }},
@@ -122,7 +162,8 @@
             {
                 margin: { t: 0 }
             }
-        );
+        );*/
+
     </script>
 
     <!-- Bootstrap core JavaScript
