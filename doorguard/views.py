@@ -55,11 +55,16 @@ def index(request):
 
 def temperature_details(request, days=3):
     start = timezone.now() - timezone.timedelta(days=days)
+    temps = Temperature.objects.filter(timestamp__gt=start)
+    temp_time = mark_safe([timezone.localtime(t.timestamp).strftime('%Y-%m-%d %H:%M:%S') for t in temps].__str__())
+    temp_values = mark_safe([t.value for t in temps].__str__())
+    
+    curr_temp = '{0:.1f}'.format(temps.latest('timestamp').value)
     t = Temperature.objects.filter(timestamp__gt=start)
-    temperature_time = mark_safe([timezone.localtime(m).strftime('%Y-%m-%d %H:%M:%S') for m in motion_time].__str__())
+    temperature_time = mark_safe([timezone.localtime(m).strftime('%Y-%m-%d %H:%M:%S') for m in t].__str__())
     temperature_count = mark_safe(motion_count.__str__())
     return render_to_response(
-        'motions.html',
+        'temperatures.html',
         locals()
     )
 

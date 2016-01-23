@@ -17,13 +17,15 @@ from doorguard.models import Device, Log, Config, Temperature, Humidity
 check_pin = 7   # GPIO-Pin nr to check on raspi
 motion_pin = 11 # GPIO-Pin for motion detection
 temp_pin = 12 # GPIO-Pin for temperature sensor
-temp_wait = 300
+alarm_pin = 15 # GPIO-Pin for triggerin alarm
+temp_wait = 300 # time interval to record temperature 
 config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
 ping_retry = 3   # how often try to ping device before set inactive
 door_check_wait = 1 # check door every 2 seconds
-alarm_delay = 10 # seconds to delay alarm from opening the door
+alarm_delay = 20 # seconds to delay alarm from opening the door
+alarm_time = 5 # seconds how long alarm will sound 
 motion_check_wait = 3 # check door every 2 seconds
 
 pipe_name = '/tmp/doorguard_dhcp_pipe'
@@ -32,6 +34,8 @@ stop_threads = threading.Event()    # threading event to stop all threads
 
 GPIO.setmode(GPIO.BOARD) # set mode for accessing GPIO pins
 
+GPIO.setup(alarm_pin, GPIO.OUT)
+GPIO.output(alarm_pin, 1) # disable alarm in the beginning...
 
 def check_devices():
     """Checks which devices are at home"""
@@ -82,6 +86,10 @@ def trigger_alarm():
     try:
         Config.objects.get(config_type='ALARM', name='sound', enabled=True)
         # do some crazy shitty sound action!!!
+        GPIO.output(alarm_pin, 0) # start alarm...
+        # just for some seconds to timestamp
+        time.sleep(alarm_time)
+        GPIO.output(alarm_pin, 1) # disable alarm
     except ObjectDoesNotExist:
         pass # sound action disabled
 
@@ -104,6 +112,22 @@ def check_door():
                 alarm_thread = threading.Thread(target=trigger_alarm)
                 alarm_thread.daemon = True
                 alarm_thread.start()
+
+            if curr_state == 0:
+                try:
+                    c = Config.objects.get(config_type='ALARM', name='siren_test', enabled=True)
+                    c.save()
+                    GPIO.output(alarm_pin, 0) # start alarm...
+                    # just for some seconds to timestamp
+                    if c.value:
+                        time.sleep(float(c.value))
+                    else:
+                        time.sleep(alarm_time)
+                    GPIO.output(alarm_pin, 1) # disable alarm
+                    c.enabled=False
+                    c.save()
+                except ObjectDoesNotExist:
+                    pass # do nothing
 
 #            Device.objects.filter(is_home=True).order_by('-modified')
         time.sleep(door_check_wait)
