@@ -212,9 +212,9 @@ if __name__ == '__main__':
     dhcp_thread.daemon = True
     dhcp_thread.start()
 
-    motion_thread = threading.Thread(target=check_motion)
-    motion_thread.daemon = True
-    motion_thread.start()
+    #motion_thread = threading.Thread(target=check_motion)
+    #motion_thread.daemon = True
+    #motion_thread.start()
 
     temp_thread = threading.Thread(target=log_temp)
     temp_thread.daemon = True
