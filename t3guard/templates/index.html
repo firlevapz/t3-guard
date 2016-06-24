@@ -47,17 +47,6 @@
             <li class="active"><a href="/">Home</a></li>
             <li><a href="/admin">Admin</a></li>
           </ul>
-          <div style="margin-top:10px; float:right">
-            {% if request.user.is_authenticated %}
-             <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'email' %}').done(function(){location.reload()}); ">
-                  <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
-                </button>-->
-                <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'sound' %}').done(function(){location.reload()});">
-                  <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
-                </button>
-            {% endif %}
-<!--            <span>T: {{ curr_temp }} °C</span> -->
-          </div>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
@@ -75,6 +64,17 @@
       </div>
 
       <div class="row">
+          <div class="col-sm-6">
+            {% if request.user.is_authenticated %}
+             <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'email' %}').done(function(){location.reload()}); ">
+                  <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
+                </button>-->
+                <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'sound' %}').done(function(){location.reload()});">
+                  <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
+                </button>
+            {% endif %}
+<!--            <span>T: {{ curr_temp }} °C</span> -->
+          </div>
         <div class="col-sm-6">
           <h3>Device Logs</h3>
             <div class="list-group">
@@ -101,21 +101,8 @@
 
       <div class="row">
         <div class="col-sm-12 col-sm-6">
-        <h4><a href="{% url 'temperature-details' %}">Temperatur</a> {% for s in sensors %}<span class="label label-default">{{ s.current_temperature }}°C </span>&nbsp;{% endfor %}</h4>
-           <div id="temperature" class="tempdiv" style="width:100%"></div>
-          Angezeigte Sensoren:
-          {% for s in sensors %}
-                <input type=checkbox id="{{ forloop.counter0 }}" onClick="changeVis(this)" checked>
-                  <label for="{{ forloop.counter0 }}">{{ s.name }}</label>
-          {% endfor %}
         </div>
 
-        <!--
-        <div class="col-sm-6">
-        <h3><a href="{% url 'humidity-details' %}">Humidity</a></h3>
-        <div id="humidity" style="width:350px;height:250px;"></div>
-        </div>
-        -->
       </div>
 
       <!--
