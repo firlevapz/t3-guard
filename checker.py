@@ -10,9 +10,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.conf import settings
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "doorguard.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "t3guard.settings")
 django.setup()
-from doorguard.models import Device, Log, Config, Temperature, Humidity
+from t3guard.models import Device, Log, Config, Temperature, Humidity
 
 check_pin = 7   # GPIO-Pin nr to check on raspi
 motion_pin = 11 # GPIO-Pin for motion detection
@@ -23,12 +23,12 @@ config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
 ping_retry = 3   # how often try to ping device before set inactive
-door_check_wait = 1 # check door every 2 seconds
+check_wait = 1 # check door every 2 seconds
 alarm_delay = 20 # seconds to delay alarm from opening the door
 alarm_time = 5 # seconds how long alarm will sound 
 motion_check_wait = 3 # check door every 2 seconds
 
-pipe_name = '/tmp/doorguard_dhcp_pipe'
+pipe_name = '/tmp/t3guard_dhcp_pipe'
 
 stop_threads = threading.Event()    # threading event to stop all threads
 
