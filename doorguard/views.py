@@ -1,3 +1,5 @@
+import csv
+import time
 from django.shortcuts import render_to_response
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
@@ -21,19 +23,23 @@ def index(request):
     except Config.DoesNotExist:
         sound_alarm = False
 
-    start = timezone.now() - timezone.timedelta(days=1)
-    motion_time = []
-    motion_count = []
-    delta = timezone.timedelta(minutes=15)
+    curr_temp = '{0:.1f}'.format(Temperature.objects.latest('timestamp').value)
+    end_window = time.mktime(time.localtime())*1000
+    start_window = end_window - 1000*3600*6
 
-    temps = Temperature.objects.filter(timestamp__gt=start)
-    temp_time = mark_safe([timezone.localtime(t.timestamp).strftime('%Y-%m-%d %H:%M:%S') for t in temps].__str__())
-    temp_values = mark_safe([t.value for t in temps].__str__())
-    curr_temp = '{0:.1f}'.format(temps.latest('timestamp').value)
+    # start = timezone.now() - timezone.timedelta(days=1)
+    # motion_time = []
+    # motion_count = []
+    # delta = timezone.timedelta(minutes=15)
 
-    humids = Humidity.objects.filter(timestamp__gt=start)
-    humidity_time = mark_safe([timezone.localtime(h.timestamp).strftime('%Y-%m-%d %H:%M:%S') for h in humids].__str__())
-    humidity_values = mark_safe([h.value for h in humids].__str__())
+    # temps = Temperature.objects.filter(timestamp__gt=start)
+    # temp_time = mark_safe([timezone.localtime(t.timestamp).strftime('%Y-%m-%d %H:%M:%S') for t in temps].__str__())
+    # temp_values = mark_safe([t.value for t in temps].__str__())
+    # curr_temp = '{0:.1f}'.format(temps.latest('timestamp').value)
+    #
+    # humids = Humidity.objects.filter(timestamp__gt=start)
+    # humidity_time = mark_safe([timezone.localtime(h.timestamp).strftime('%Y-%m-%d %H:%M:%S') for h in humids].__str__())
+    # humidity_values = mark_safe([h.value for h in humids].__str__())
 
 
 #    while start < timezone.now():
@@ -58,7 +64,7 @@ def temperature_details(request, days=3):
     temps = Temperature.objects.filter(timestamp__gt=start)
     temp_time = mark_safe([timezone.localtime(t.timestamp).strftime('%Y-%m-%d %H:%M:%S') for t in temps].__str__())
     temp_values = mark_safe([t.value for t in temps].__str__())
-    
+
     curr_temp = '{0:.1f}'.format(temps.latest('timestamp').value)
     t = Temperature.objects.filter(timestamp__gt=start)
     temperature_time = mark_safe([timezone.localtime(m).strftime('%Y-%m-%d %H:%M:%S') for m in t].__str__())
@@ -67,6 +73,35 @@ def temperature_details(request, days=3):
         'temperatures.html',
         locals()
     )
+
+
+def csv_temperatures(request, sensor_id):
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="temperatures.csv"'
+
+    writer = csv.writer(response)
+
+    if sensor_id == 'all':
+        sensors = ['Vorraum']
+    else:
+        sensors = []
+
+    header = ['Date']
+    header.extend(sensors)
+    writer.writerow(header)
+
+    latest_timestamp = timezone.now() - timezone.timedelta(days=15)
+
+    temps = Temperature.objects.filter(timestamp__gt=latest_timestamp).order_by('timestamp')
+
+    #temp_time = [timezone.localtime(t.timestamp).strftime('%Y/%m/%d %H:%M') for t in temps]
+    #temp_values = [t.value for t in temps]
+
+    #temps = Timestamp.objects.filter(timestamp__gt=latest_timestamp).order_by('timestamp')
+    [writer.writerow([timezone.localtime(t.timestamp).strftime('%Y/%m/%d %H:%M'), t.value]) for t in temps]
+
+    return response
 
 
 def humidity_details(request, days=3):

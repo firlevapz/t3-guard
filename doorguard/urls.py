@@ -25,4 +25,5 @@ urlpatterns = [
     url(r'^motion_details/$', views.motion_details, name='motion-details'),
     url(r'^motion_details/(?P<days>[0-9]*)/$', views.motion_details, name='motion-details-days'),
     url(r'^toggle_alarm/(?P<alarm_name>[A-Za-z0-9]+)/$', views.toggle_alarm, name='toggle-alarm'),
+    url(r'^csv_temp/(?P<sensor_id>[a-z0-9]+)/$', views.csv_temperatures, name='csv-temperatures'),
 ]
