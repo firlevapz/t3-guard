@@ -12,20 +12,20 @@ from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "t3guard.settings")
 django.setup()
-from t3guard.models import Device, Log, Config, Temperature, Humidity
+from t3guard.models import Device, Log, Config, Temperature
 
-check_pin = 7   # GPIO-Pin nr to check on raspi
+# check_pin = 7   # GPIO-Pin nr to check on raspi
 motion_pin = 11 # GPIO-Pin for motion detection
-temp_pin = 12 # GPIO-Pin for temperature sensor
+# temp_pin = 12 # GPIO-Pin for temperature sensor
 alarm_pin = 15 # GPIO-Pin for triggerin alarm
-temp_wait = 300 # time interval to record temperature 
+# temp_wait = 300 # time interval to record temperature
 config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
 ping_retry = 3   # how often try to ping device before set inactive
-check_wait = 1 # check door every 2 seconds
+# check_wait = 1 # check door every 2 seconds
 alarm_delay = 20 # seconds to delay alarm from opening the door
-alarm_time = 5 # seconds how long alarm will sound 
+alarm_time = 5 # seconds how long alarm will sound
 motion_check_wait = 3 # check door every 2 seconds
 
 pipe_name = '/tmp/t3guard_dhcp_pipe'
@@ -166,9 +166,6 @@ def log_temp():
         t = Temperature(value=temperature)
         t.save()
 
-        h = Humidity(value=humidity)
-        h.save()
-
         time.sleep(temp_wait)
 
 
@@ -188,14 +185,16 @@ def dhcp_pipe_reader():
                 ip = line[2]
                 hostname = line[3]
 
-                try:
-                    d = Device.objects.get(ip=ip, is_home=False)
+                d, created = Device.objects.get_or_create(mac=mac)
+                if created:
+                    d.ip = ip
+                    d.name = hostname
+                    d.save()
+                elif d.authorized:
                     d.is_home = True
                     d.save()
                     l = Log(device=d, status=True, log_type='DE', text='(dhcp)')
                     l.save()
-                except ObjectDoesNotExist:
-                    pass
 
 
 if __name__ == '__main__':
@@ -204,9 +203,9 @@ if __name__ == '__main__':
     device_thread.daemon = True
     device_thread.start()
 
-    door_thread = threading.Thread(target=check_door)
-    door_thread.daemon = True
-    door_thread.start()
+    # door_thread = threading.Thread(target=check_door)
+    # door_thread.daemon = True
+    # door_thread.start()
 
     dhcp_thread = threading.Thread(target=dhcp_pipe_reader)
     dhcp_thread.daemon = True
@@ -216,9 +215,9 @@ if __name__ == '__main__':
     #motion_thread.daemon = True
     #motion_thread.start()
 
-    temp_thread = threading.Thread(target=log_temp)
-    temp_thread.daemon = True
-    temp_thread.start()
+    # temp_thread = threading.Thread(target=log_temp)
+    # temp_thread.daemon = True
+    # temp_thread.start()
 
     # print('Checker started...')
     # print('Press <Ctrl+C> to end')

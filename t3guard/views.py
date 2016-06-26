@@ -12,7 +12,7 @@ from .models import Device, Log, Config, Temperature
 def index(request):
     last_logs = Log.objects.filter(log_type__exact='DE')[:10]
     last_door_opened = Log.objects.filter(log_type__exact='DO', status=False)[:10]
-    devices = Device.objects.all()
+    devices = Device.objects.filter(authorized=True)
 #    try:
 #        email_alarm = True if Config.objects.get(config_type='ALARM', name='email', enabled=True) else False
 #    except Config.DoesNotExist:

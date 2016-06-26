@@ -57,24 +57,49 @@
     <div class="page-header">
         {% for d in devices %}
               <button type="button" class="btn btn-sm {% if d.is_home %}btn-success{% else %}btn-warning{% endif %}">
-                  {{ d.owner.name }} is {% if d.is_home %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
-                since {{ d.modified|timesince }} ({{ d.modified }})
+                  {{ d.name }} {% if d.is_home %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
+                since {{ d.modified|timesince }}
               </button>
         {% endfor %}
       </div>
 
       <div class="row">
-          <div class="col-sm-6">
-            {% if request.user.is_authenticated %}
-             <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'email' %}').done(function(){location.reload()}); ">
-                  <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
-                </button>-->
-                <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'sound' %}').done(function(){location.reload()});">
-                  <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
-                </button>
-            {% endif %}
+
+        <div class="col-xs-6">
+          <h4>Radio</h4>
+            <div class="checkbox">
+              <label><input type="checkbox" onclick="handle_click(this, '{% url 'toggle-alarm' 'sound' %}')" value="">Auto play</label>
+            </div>
+        </div>
+
+        <div class="col-xs-6">
+          <h4>Alarm</h4>
+          {% if request.user.is_authenticated %}
+           <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'email' %}').done(function(){location.reload()}); ">
+                <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
+              </button>-->
+              <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="handle_click(this, '{% url 'toggle-alarm' 'sound' %}')">
+                <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
+              </button>
+          {% endif %}
+
+          <script type="text/javascript">
+          function handle_click ( obj, link ) {
+            //obj.style.backgroundColor = new_color;
+
+            $.ajax(link).done(function(){
+              console.log(obj);
+              location.reload();
+            });
+            // console.log(obj);
+          }
+          </script>
+        </div>
+
 <!--            <span>T: {{ curr_temp }} °C</span> -->
-          </div>
+        </div>
+        <div class="row">
+
         <div class="col-sm-6">
           <h3>Device Logs</h3>
             <div class="list-group">
