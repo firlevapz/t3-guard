@@ -59,6 +59,12 @@
 
       <!-- Main jumbotron for a primary marketing message or call to action -->
     <div class="page-header">
+        {% for message in messages %}
+          <div class="alert alert-warning {{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+
         {% for d in devices %}
               <button type="button" class="btn btn-sm {% if d.is_home %}btn-success{% else %}btn-warning{% endif %}">
                   {{ d.name }} {% if d.is_home %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
@@ -71,36 +77,37 @@
 
         <div class="col-xs-6">
           <h4>Radio</h4>
-            <div class="btn-group" id="status" data-toggle="buttons">
-              <label class="btn btn-default btn-on btn-xs active">
+            {% if not radio_autoplay %}
+            <div class="btn-group" id="radio_power" data-toggle="buttons" onclick="handle_click(this, '{% url 'toggle-config' 'RADIO' 'power' %}')">
+              <label class="btn btn-default btn-on btn-xs {% if radio_power %}active{% endif %}">
               <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
-              <label class="btn btn-default btn-off btn-xs ">
+              <label class="btn btn-default btn-off btn-xs {% if not radio_power %}active{% endif %}">
               <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
             </div>
             <div class="btn-group" role="group" aria-label="basic label">
               <p class="help-block"> Radio Power</p>
             </div>
+            {% endif %}
 
-
-
+            {% if not radio_timer %}
             <div>
-              <div class="btn-group" id="status" data-toggle="buttons">
-                <label class="btn btn-default btn-on btn-xs active">
+              <div class="btn-group" id="radio_autoplay" data-toggle="buttons" onclick="handle_click(this, '{% url 'toggle-config' 'RADIO' 'autoplay' %}')">
+                <label class="btn btn-default btn-on btn-xs {% if radio_autoplay %}active{% endif %}">
                 <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
-                <label class="btn btn-default btn-off btn-xs ">
+                <label class="btn btn-default btn-off btn-xs {% if not radio_autoplay %}active{% endif %}">
                 <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
               </div>
               <div class="btn-group" role="group" aria-label="basic label">
                 <p class="help-block"> Auto Play</p>
               </div>
             </div>
-
             <div>
+            {% endif %}
 
-            <div class="btn-group" id="status" data-toggle="buttons">
-              <label class="btn btn-default btn-on btn-xs ">
+            <div class="btn-group" id="radio_timer" data-toggle="buttons" onclick="handle_click(this, '{% url 'toggle-config' 'RADIO' 'timer' %}')">
+              <label class="btn btn-default btn-on btn-xs {% if radio_timer %}active{% endif %}">
               <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
-              <label class="btn btn-default btn-off btn-xs active">
+              <label class="btn btn-default btn-off btn-xs {% if not radio_timer %}active{% endif %}">
               <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
             </div>
             <div class="btn-group" role="group" aria-label="basic label">
@@ -114,27 +121,37 @@
 
         <div class="col-xs-6">
           <h4>Alarm</h4>
-          {% if request.user.is_authenticated %}
-           <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-alarm' 'email' %}').done(function(){location.reload()}); ">
+           <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-config' 'ALARM' 'email' %}').done(function(){location.reload()}); ">
                 <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
               </button>-->
-              <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="handle_click(this, '{% url 'toggle-alarm' 'sound' %}')">
-                <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
-              </button>
-          {% endif %}
+          <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="handle_click(this, '{% url 'toggle-config' 'ALARM' 'sound' %}')">
+            <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
+          </button>
 
-          <script type="text/javascript">
-          function handle_click ( obj, link ) {
-            //obj.style.backgroundColor = new_color;
-
-            $.ajax(link).done(function(){
-              console.log(obj);
-              location.reload();
-            });
-            // console.log(obj);
-          }
-          </script>
         </div>
+
+        <script type="text/javascript">
+        function handle_click( obj, link ) {
+          // disable all buttons
+          $('#'+obj.id).children().each(function(){
+            var $this = $(this);
+            $this.addClass('disabled');
+            $this.prop('disabled',true);
+          });
+          // remove onclick function
+          $('#'+obj.id).attr("onclick","");
+
+          if (obj.id == 'radio_timer' && parseFloat($('#timer-min').val()) > 0) {
+            // need to also send timer value
+            link = link + $('#timer-min').val() + '/';
+          }
+
+          // send to server & reload
+          $.ajax(link).done(function(){
+            location.reload();
+          });
+        }
+        </script>
 
 <!--            <span>T: {{ curr_temp }} °C</span> -->
         </div>

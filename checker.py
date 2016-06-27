@@ -27,6 +27,7 @@ ping_retry = 3   # how often try to ping device before set inactive
 alarm_delay = 20 # seconds to delay alarm from opening the door
 alarm_time = 5 # seconds how long alarm will sound
 motion_check_wait = 3 # check door every 2 seconds
+radio_wait = 2  # wait n seconds to react on radio states
 
 pipe_name = '/tmp/t3guard_dhcp_pipe'
 
@@ -36,6 +37,25 @@ GPIO.setmode(GPIO.BOARD) # set mode for accessing GPIO pins
 
 GPIO.setup(alarm_pin, GPIO.OUT)
 GPIO.output(alarm_pin, 1) # disable alarm in the beginning...
+
+
+def radio_control():
+    """Controls state of the radio, including timing function"""
+    while not stop_threads.isSet():
+        conf_dict = {a['name']: a for a in Config.objects.filter(
+            config_type='RADIO').values('name','enabled','value')}
+
+        if conf_dict['power']['enabled']:
+            # power on
+
+        if conf_dict['timer']['enabled']:
+            # Check if time is not up yet, then power on, otherwise off
+
+        if conf_dict['autoplay']['enabled']:
+            # Check if something is running, then set power
+
+        time.sleep(radio_wait)
+
 
 def check_devices():
     """Checks which devices are at home"""
@@ -169,7 +189,6 @@ def log_temp():
         time.sleep(temp_wait)
 
 
-
 def dhcp_pipe_reader():
     """Checks for new DHCP-registration of devices"""
     if not os.path.exists(pipe_name):
@@ -202,6 +221,10 @@ if __name__ == '__main__':
     device_thread = threading.Thread(target=check_devices)
     device_thread.daemon = True
     device_thread.start()
+
+    radio_thread = threading.Thread(target=radio_control)
+    radio_thread.daemon = True
+    radio_thread.start()
 
     # door_thread = threading.Thread(target=check_door)
     # door_thread.daemon = True

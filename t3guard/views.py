@@ -5,23 +5,26 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.contrib import messages
+from django.contrib.messages import add_message, get_messages
 
 from .models import Device, Log, Config, Temperature
 
 
 def index(request):
     last_logs = Log.objects.filter(log_type__exact='DE')[:10]
-    last_door_opened = Log.objects.filter(log_type__exact='DO', status=False)[:10]
+    #last_door_opened = Log.objects.filter(log_type__exact='DO', status=False)[:10]
     devices = Device.objects.filter(authorized=True)
 #    try:
 #        email_alarm = True if Config.objects.get(config_type='ALARM', name='email', enabled=True) else False
 #    except Config.DoesNotExist:
 #        email_alarm = False
+    messages = get_messages(request)
 
-    try:
-        sound_alarm = True if Config.objects.get(config_type='ALARM', name='sound', enabled=True) else False
-    except Config.DoesNotExist:
-        sound_alarm = False
+    sound_alarm = True if Config.objects.filter(config_type='ALARM', name='sound', enabled=True) else False
+    radio_power = True if Config.objects.filter(config_type='RADIO', name='power', enabled=True) else False
+    radio_timer = True if Config.objects.filter(config_type='RADIO', name='timer', enabled=True) else False
+    radio_autoplay = True if Config.objects.filter(config_type='RADIO', name='autoplay', enabled=True) else False
 
 #    curr_temp = '{0:.1f}'.format(Temperature.objects.latest('timestamp').value)
 #    end_window = time.mktime(time.localtime())*1000
@@ -89,10 +92,6 @@ def csv_temperatures(request, sensor_id):
     return response
 
 
-def humidity_details(request, days=3):
-    pass
-
-
 def motion_details(request, days=3):
     devices = Device.objects.all()
 
@@ -125,11 +124,15 @@ def motion_details(request, days=3):
 
 
 @login_required
-def toggle_alarm(request, alarm_name):
-    try:
-        c = Config.objects.get(config_type='ALARM', name=alarm_name)
-        c.enabled = not c.enabled
-        c.save()
-        return HttpResponse('{} set to {}'.format(alarm_name, c.enabled))
-    except Config.DoesNotExist:
-        return HttpResponse('failed to set {}'.format(alarm_name))
+def toggle_config(request, config_type, name, value=None):
+    c, created = Config.objects.get_or_create(config_type=config_type, name=name)
+    c.enabled = not c.enabled
+    if value:
+        c.value = value
+
+    if name == 'timer' and not value:
+        add_message(request, messages.INFO, 'You must provide a value to enable timer!')
+        return HttpResponse('Timer not enabled')
+
+    c.save()
+    return HttpResponse('{}-{} set to {}'.format(config_type, name, c.enabled))

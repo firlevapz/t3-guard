@@ -5,6 +5,7 @@ class Config(models.Model):
     CONFIG_TYPES = (
         ('ALARM', 'Alarm-Type'),
         ('EMAIL', 'Email address'),
+        ('RADIO', 'Radio'),
         ('CHECKER', 'Configuration for checker.py'),
     )
     config_type = models.CharField(max_length=10, choices=CONFIG_TYPES)

@@ -21,9 +21,8 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^$', views.index, name='index'),
     url(r'^temperature_details/$', views.temperature_details, name='temperature-details'),
-    url(r'^humidity_details/$', views.humidity_details, name='humidity-details'),
     url(r'^motion_details/$', views.motion_details, name='motion-details'),
     url(r'^motion_details/(?P<days>[0-9]*)/$', views.motion_details, name='motion-details-days'),
-    url(r'^toggle_alarm/(?P<alarm_name>[A-Za-z0-9]+)/$', views.toggle_alarm, name='toggle-alarm'),
+    url(r'^toggle_config/(?P<config_type>[A-Za-z0-9]+)/(?P<name>[A-Za-z0-9]+)(?:/(?P<value>[0-9]+))?/$', views.toggle_config, name='toggle-config'),
     url(r'^csv_temp/(?P<sensor_id>[a-z0-9]+)/$', views.csv_temperatures, name='csv-temperatures'),
 ]
