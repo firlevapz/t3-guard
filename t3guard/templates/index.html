@@ -20,6 +20,10 @@
 
     <!-- Custom styles for this template -->
     <link href="{% static 'css/theme.css' %}" rel="stylesheet">
+    <style>
+    .btn-default.btn-on.active{background-color: #5BB75B;color: white;}
+    .btn-default.btn-off.active{background-color: #DA4F49;color: white;}
+    </style>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -67,9 +71,45 @@
 
         <div class="col-xs-6">
           <h4>Radio</h4>
-            <div class="checkbox">
-              <label><input type="checkbox" onclick="handle_click(this, '{% url 'toggle-alarm' 'sound' %}')" value="">Auto play</label>
+            <div class="btn-group" id="status" data-toggle="buttons">
+              <label class="btn btn-default btn-on btn-xs active">
+              <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
+              <label class="btn btn-default btn-off btn-xs ">
+              <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
             </div>
+            <div class="btn-group" role="group" aria-label="basic label">
+              <p class="help-block"> Radio Power</p>
+            </div>
+
+
+
+            <div>
+              <div class="btn-group" id="status" data-toggle="buttons">
+                <label class="btn btn-default btn-on btn-xs active">
+                <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
+                <label class="btn btn-default btn-off btn-xs ">
+                <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
+              </div>
+              <div class="btn-group" role="group" aria-label="basic label">
+                <p class="help-block"> Auto Play</p>
+              </div>
+            </div>
+
+            <div>
+
+            <div class="btn-group" id="status" data-toggle="buttons">
+              <label class="btn btn-default btn-on btn-xs ">
+              <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
+              <label class="btn btn-default btn-off btn-xs active">
+              <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
+            </div>
+            <div class="btn-group" role="group" aria-label="basic label">
+              <p class="help-block">Timer: </p>
+            </div>
+            <div class="btn-group">
+              <input type="number" style="width:50px" placeholder="min" class="form-control input-sm" id="timer-min">
+            </div>
+          </div>
         </div>
 
         <div class="col-xs-6">
