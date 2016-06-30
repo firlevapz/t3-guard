@@ -1,0 +1,12 @@
+django
+django-cors-headers
+django_extensions
+
+Mopidy-Moped
+mopidy-musicbox-webclient
+Mopidy-Mobile
+Mopidy-Simple-Webclient
+
+configobj
+Mopidy-Material-Webclient
+
