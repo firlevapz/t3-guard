@@ -14,16 +14,17 @@ from .models import Device, Log, Config, Temperature
 def index(request):
     last_logs = Log.objects.filter(log_type__exact='DE')[:10]
     #last_door_opened = Log.objects.filter(log_type__exact='DO', status=False)[:10]
-    devices = Device.objects.filter(authorized=True)
+    devices = Device.objects.filter(authorized=True, is_home=True)
 #    try:
 #        email_alarm = True if Config.objects.get(config_type='ALARM', name='email', enabled=True) else False
 #    except Config.DoesNotExist:
 #        email_alarm = False
     messages = get_messages(request)
+    server_ip = request.META['HTTP_HOST'].split(':')[0]
 
     sound_alarm = True if Config.objects.filter(config_type='ALARM', name='sound', enabled=True) else False
     radio_power = True if Config.objects.filter(config_type='RADIO', name='power', enabled=True) else False
-    radio_timer = True if Config.objects.filter(config_type='RADIO', name='timer', enabled=True) else False
+    radio_timer, created = Config.objects.get_or_create(config_type='RADIO', name='timer')
     radio_autoplay = True if Config.objects.filter(config_type='RADIO', name='autoplay', enabled=True) else False
 
 #    curr_temp = '{0:.1f}'.format(Temperature.objects.latest('timestamp').value)
@@ -130,9 +131,18 @@ def toggle_config(request, config_type, name, value=None):
     if value:
         c.value = value
 
-    if name == 'timer' and not value:
+    if name == 'timer' and not value and c.enabled:
         add_message(request, messages.INFO, 'You must provide a value to enable timer!')
         return HttpResponse('Timer not enabled')
 
     c.save()
     return HttpResponse('{}-{} set to {}'.format(config_type, name, c.enabled))
+
+
+@login_required
+def set_config_value(request, config_type, name, value=None):
+    c, created = Config.objects.get_or_create(config_type=config_type, name=name)
+    if value:
+        c.value = value
+    c.save()
+    return HttpResponse('{}-{} value set to {}'.format(config_type, name, value))
