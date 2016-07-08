@@ -3,5 +3,5 @@
 dir=`dirname $0`
 cd "$dir"
 
-#./manage.py runserver 0.0.0.0:8001 --noreload
-./manage.py runserver 0.0.0.0:8001 
+./manage.py runserver 0.0.0.0:8000 --noreload
+#./manage.py runserver 0.0.0.0:8000

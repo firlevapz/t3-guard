@@ -18,8 +18,8 @@ class CorsMiddleware:
         Add the respective CORS headers
         """
         origin = request.META.get('HTTP_ORIGIN')
-        print(origin)
+        #print(origin)
         server_ip = request.META.get('HTTP_HOST').split(':')[0]
-        print(server_ip)
+        #print(server_ip)
         response['Access-Control-Allow-Origin'] = '*'
         return response

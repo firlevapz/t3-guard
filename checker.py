@@ -46,12 +46,15 @@ def radio_control():
             config_type='RADIO').values('name','enabled','value')}
 
         if conf_dict['power']['enabled']:
+            print('radio power on')
             # power on
 
         if conf_dict['timer']['enabled']:
+            print('timer on')
             # Check if time is not up yet, then power on, otherwise off
 
         if conf_dict['autoplay']['enabled']:
+            print('autoplay on')
             # Check if something is running, then set power
 
         time.sleep(radio_wait)
