@@ -1,0 +1,11 @@
+[Unit]
+Description=Doorguard service checker (checks periodically the door-state)
+
+[Service]
+ExecStart=/home/pi/t3-guard/checker.py
+Restart=on-failure
+SuccessExitStatus=3 4
+RestartForceExitStatus=3 4
+
+[Install]
+WantedBy=multi-user.target
