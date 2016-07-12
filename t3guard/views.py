@@ -19,6 +19,7 @@ def index(request):
 def dashboard(request):
     server_ip = request.META['HTTP_HOST'].split(':')[0]
     last_logs = Log.objects.filter(log_type__exact='DE')[:10]
+    last_alarms = Log.objects.filter(log_type__exact='AL')[:10]
     #last_door_opened = Log.objects.filter(log_type__exact='DO', status=False)[:10]
     devices = Device.objects.filter(authorized=True, is_home=True)
 #    try:

@@ -25,8 +25,17 @@ body {
 }
 
 iframe {
+  margin-top:10px;
   width: 100%;
   border: 0px;
 }
+
+.page-header {
+    padding-bottom: 0px;
+    margin: 0px;
+    margin-top: 5px;
+    border-bottom: 0px dashed #eee;
+}
+
 
 .glyphicon-door                   { &:before { content: "\1f6aa"; } }

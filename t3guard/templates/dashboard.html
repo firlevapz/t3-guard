@@ -147,7 +147,8 @@
 
         <div class="row">
           <div class="col-md-12">
-            <iframe src="http://{{ server_ip }}:6680/" width="100%" height="300px" style="border:0px"></iframe>
+            <!--<iframe src="http://{{ server_ip }}:6680/" width="100%" height="300px" style="border:0px"></iframe>-->
+            <iframe src="http://{{ server_ip }}:6680/mobile/" width="100%" height="300px" style="border:0px"></iframe>
           </div>
         </div>
 
@@ -166,11 +167,11 @@
             </div>
         </div><!-- /.col-sm-4 -->
         <div class="col-sm-6">
-          <h3>Motion detected</h3>
+          <h3>Alarm Logs</h3>
           <div class="list-group">
-              {% for d in last_door_opened %}
+              {% for d in last_alarms %}
                 <span class="list-group-item ">
-                  <span class="glyphicon glyphicon-book" aria-hidden="true"></span> door opened at {{ d.created }} ({{ d.created|timesince }})
+                  <span class="glyphicon glyphicon-book" aria-hidden="true"></span> Alarm at {{ d.created }}
                 </span>
               {% endfor %}
           </div>

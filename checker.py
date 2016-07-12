@@ -4,6 +4,7 @@ import subprocess
 import time
 import threading
 import RPi.GPIO as GPIO
+import pyjsonrpc
 
 import django
 from django.core.exceptions import ObjectDoesNotExist
@@ -18,15 +19,16 @@ from t3guard.models import Device, Log, Config, Temperature
 motion_pin = 7 # GPIO-Pin for motion detection
 # temp_pin = 12 # GPIO-Pin for temperature sensor
 alarm_pin = 11 # GPIO-Pin for triggerin alarm
+radio_pin = 13 # GPIO-Pin for controlling radio
 # temp_wait = 300 # time interval to record temperature
 config_reload = 10 # seconds how often reload the config
 
-device_check_wait = 10*60  # each 10 minutes check for devices
+device_check_wait = 60  # each 10 minutes check for devices
 ping_retry = 3   # how often try to ping device before set inactive
 # check_wait = 1 # check door every 2 seconds
 alarm_delay = 2 # seconds to delay alarm from opening the door
-alarm_time = 10 # seconds how long alarm will sound
-motion_check_wait = 2 # check door every 2 seconds
+alarm_time = 120 # seconds how long alarm will sound maximum
+motion_check_wait = 1 # check motion every 2 seconds
 radio_wait = 2  # wait n seconds to react on radio states
 
 pipe_name = '/tmp/t3guard_dhcp_pipe'
@@ -36,34 +38,60 @@ stop_threads = threading.Event()    # threading event to stop all threads
 GPIO.setmode(GPIO.BOARD) # set mode for accessing GPIO pins
 
 GPIO.setup(alarm_pin, GPIO.OUT)
+GPIO.setup(radio_pin, GPIO.OUT)
 GPIO.output(alarm_pin, 1) # disable alarm in the beginning...
 
 
 def radio_control():
     """Controls state of the radio, including timing function"""
+    last_update = 0
+    c=pyjsonrpc.HttpClient(url='http://localhost:6680/mopidy/rpc')
+
     while not stop_threads.isSet():
         conf_dict = {a['name']: a for a in Config.objects.filter(
             config_type='RADIO').values('name','enabled','value')}
 
-        if conf_dict['power']['enabled']:
-            print('radio power on')
-            # power on
-
         if conf_dict['timer']['enabled']:
-            print('timer on')
             # Check if time is not up yet, then power on, otherwise off
-
-        if conf_dict['autoplay']['enabled']:
-            print('autoplay on')
+            radio_off = 0
+            timer_value = float(conf_dict['timer']['value'])
+            if timer_value <= 0:
+                for timer in Config.objects.filter(config_type='RADIO'):
+                    timer.enabled = False
+                    timer.save()
+                last_update = 0
+                radio_off = 1
+                c.call('core.playback.pause')
+            elif last_update == 0:
+                last_update = time.time()
+            elif time.time()-last_update > 30:
+                timer = Config.objects.filter(config_type='RADIO', name='timer')[0]
+                timer.value = '%.1f' % (timer_value - (time.time()-last_update)/60)
+                timer.save()
+                last_update = time.time()
+                
+        elif conf_dict['autoplay']['enabled']:
             # Check if something is running, then set power
+            state = c.call('core.playback.get_state')
+            if state == 'playing':
+                radio_off = 0
+            else:
+                radio_off = 1
+        elif conf_dict['power']['enabled']:
+            # power on
+            radio_off = 0
+        else:
+            # power off radio
+            radio_off = 1
 
+        GPIO.output(radio_pin, radio_off)
         time.sleep(radio_wait)
 
 
 def check_devices():
     """Checks which devices are at home"""
     while not stop_threads.isSet():
-        devices = Device.objects.all()  # get all current devices
+        devices = Device.objects.filter(authorized=True, is_home=True)  # get authorized devices
         for d in devices:
             for i in range(int(ping_retry)):
                 ret = subprocess.call("ping -c 1 %s" % d.ip,
@@ -110,8 +138,13 @@ def trigger_alarm():
         Config.objects.get(config_type='ALARM', name='sound', enabled=True)
         # do some crazy shitty sound action!!!
         GPIO.output(alarm_pin, 0) # start alarm...
-        # just for some seconds to timestamp
-        time.sleep(alarm_time)
+        # just for some seconds
+        alarm_start = time.time()
+        while Device.objects.filter(is_home=True, authorized=True).count() == 0:
+            time.sleep(1)
+            if time.time()-alarm_start >= alarm_time:
+                break
+
         GPIO.output(alarm_pin, 1) # disable alarm
     except ObjectDoesNotExist:
         pass # sound action disabled
@@ -163,21 +196,12 @@ def check_motion():
 
     while not stop_threads.isSet():
         curr_state = GPIO.input(motion_pin)
-        if curr_state and Device.objects.filter(is_home=True, authorized=True).count() == 0:
-#            l = Log(status=curr_state, log_type='MO')
-#            l.save()
-
-#           could trigger also alarm here if no phone is present
-#            if curr_state == 0 and Device.objects.filter(is_home=True, authorized=True).count() == 0:
-                # Door opened and nobody at home!
-            #alarm_thread = threading.Thread(target=trigger_alarm)
-            #alarm_thread.daemon = True
-            #alarm_thread.start()
-
-            trigger_alarm()
-
-#           Device.objects.filter(is_home=True).order_by('-modified')
-
+        if curr_state:
+            # check state once more, to avoid wrong alarms...
+            time.sleep(0.1)
+            curr_state = GPIO.input(motion_pin)
+            if curr_state and Device.objects.filter(is_home=True, authorized=True).count() == 0:
+                trigger_alarm()
         time.sleep(motion_check_wait)
 
 
