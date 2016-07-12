@@ -201,7 +201,8 @@ def check_motion():
             time.sleep(0.1)
             curr_state = GPIO.input(motion_pin)
             if curr_state and Device.objects.filter(is_home=True, authorized=True).count() == 0:
-                trigger_alarm()
+                if Config.objects.get(config_type='ALARM', enabled=True).count() > 0:
+                    trigger_alarm()
         time.sleep(motion_check_wait)
 
 
