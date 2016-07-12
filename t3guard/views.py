@@ -12,6 +12,12 @@ from .models import Device, Log, Config, Temperature
 
 
 def index(request):
+    server_ip = request.META['HTTP_HOST'].split(':')[0]
+    return render_to_response('index.html', locals())
+    
+
+def dashboard(request):
+    server_ip = request.META['HTTP_HOST'].split(':')[0]
     last_logs = Log.objects.filter(log_type__exact='DE')[:10]
     #last_door_opened = Log.objects.filter(log_type__exact='DO', status=False)[:10]
     devices = Device.objects.filter(authorized=True, is_home=True)
@@ -20,7 +26,6 @@ def index(request):
 #    except Config.DoesNotExist:
 #        email_alarm = False
     messages = get_messages(request)
-    server_ip = request.META['HTTP_HOST'].split(':')[0]
 
     sound_alarm = True if Config.objects.filter(config_type='ALARM', name='sound', enabled=True) else False
     radio_power = True if Config.objects.filter(config_type='RADIO', name='power', enabled=True) else False
@@ -44,7 +49,7 @@ def index(request):
 #    motion_count = mark_safe(motion_count.__str__())
 
     return render_to_response(
-        'index.html',
+        'dashboard.html',
         locals()
     )
 

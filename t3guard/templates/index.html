@@ -19,7 +19,7 @@
     <link href="{% static 'css/bootstrap-theme.min.css' %}" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="{% static 'css/theme.css' %}" rel="stylesheet">
+    <link href="{% static 'css/index.css' %}" rel="stylesheet">
     <style>
     .btn-default.btn-on.active{background-color: #5BB75B;color: white;}
     .btn-default.btn-off.active{background-color: #DA4F49;color: white;}
@@ -33,9 +33,8 @@
   </head>
 
   <body role="document">
-
     <!-- Fixed navbar -->
-    <nav class="navbar navbar-default navbar-fixed-top">
+    <nav class="navbar navbar-default navbar-fixed-top banner">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -48,179 +47,31 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="/">Home</a></li>
-            <li><a href="/admin">Admin</a></li>
-            <li><a href="http://{{ server_ip }}:6680/moped/">Moped</a></li>
-            <li><a href="http://{{ server_ip }}:6680/musicbox_webclient/">Musicbox</a></li>
-            <li><a href="http://{{ server_ip }}:6680/material-webclient/">Material</a></li>
-            <li><a href="http://{{ server_ip }}:6680/mobile/">Mobile</a></li>
-            <li><a href="http://{{ server_ip }}:6680/simple-webclient/">Simple</a></li>
+            <li class="active"><a href="{% url 'dashboard' %}" target="mainframe">Home</a></li>
+            <li><a href="/admin" target="mainframe">Admin</a></li>
+            <li><a href="http://{{ server_ip }}:6680/mobile/" target="mainframe">Music Player</a></li>
+            <li><a href="http://{{ server_ip }}:6680/musicbox_webclient/" target="mainframe">Musicbox</a></li>
+<!--            <li><a href="http://{{ server_ip }}:6680/moped/" target="mainframe">Moped</a></li>
+            <li><a href="http://{{ server_ip }}:6680/material-webclient/" target="mainframe">Material</a></li>
+            <li><a href="http://{{ server_ip }}:6680/simple-webclient/" target="mainframe">Simple</a></li>-->
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
-    <div class="container theme-showcase" role="main">
+    <iframe src="{% url 'dashboard' %}" name="mainframe">
+    </iframe>
 
-      <!-- Main jumbotron for a primary marketing message or call to action -->
-    <div class="page-header">
-        {% for message in messages %}
-          <div class="alert alert-warning {{ message.tags }}">
-            {{ message }}
-          </div>
-        {% endfor %}
-        Checked in:
-        {% for d in devices %}
-              <button type="button" class="btn btn-sm btn-success">
-                  {{ d.name }}
-              </button>
-        {% endfor %}
-      </div>
-
-      <div class="row">
-
-        <div class="col-xs-6">
-          <h4>Radio</h4>
-            {% if not radio_autoplay and not radio_timer.enabled %}
-            <div class="btn-group" id="radio_power" data-toggle="buttons" onclick="handle_click(this, '{% url 'toggle-config' 'RADIO' 'power' %}')">
-              <label class="btn btn-default btn-on btn-xs {% if radio_power %}active{% endif %}">
-              <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
-              <label class="btn btn-default btn-off btn-xs {% if not radio_power %}active{% endif %}">
-              <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
-            </div>
-            <div class="btn-group" role="group" aria-label="basic label">
-              <p class="help-block">Radio Power</p>
-            </div>
-            {% endif %}
-
-            {% if not radio_timer.enabled %}
-            <div>
-              <div class="btn-group" id="radio_autoplay" data-toggle="buttons" onclick="handle_click(this, '{% url 'toggle-config' 'RADIO' 'autoplay' %}')">
-                <label class="btn btn-default btn-on btn-xs {% if radio_autoplay %}active{% endif %}">
-                <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
-                <label class="btn btn-default btn-off btn-xs {% if not radio_autoplay %}active{% endif %}">
-                <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
-              </div>
-              <div class="btn-group" role="group" aria-label="basic label">
-                <p class="help-block">Auto on playing</p>
-              </div>
-            </div>
-            {% endif %}
-
-            <div>
-            <div class="btn-group" id="radio_timer" data-toggle="buttons" onclick="handle_click(this, '{% url 'toggle-config' 'RADIO' 'timer' %}')">
-              <label class="btn btn-default btn-on btn-xs {% if radio_timer.enabled %}active{% endif %}">
-              <input type="radio" value="1" name="multifeatured_module[module_id][status]" checked="checked"><span class="glyphicon glyphicon-ok"></span></label>
-              <label class="btn btn-default btn-off btn-xs {% if not radio_timer.enabled %}active{% endif %}">
-              <input type="radio" value="0" name="multifeatured_module[module_id][status]"><span class="glyphicon glyphicon-remove"></span></label>
-            </div>
-            <div class="btn-group" role="group" aria-label="basic label">
-              <p class="help-block">Timer: </p>
-            </div>
-            <div class="btn-group">
-              <input type="number" style="width:50px" placeholder="min" {% if radio_timer.enabled %}value={{ radio_timer.value }}{% endif %} class="form-control input-sm" id="timer-min" {% if radio_timer.enabled %}onchange="change_timer_value(this, '{% url 'set-config-value' 'RADIO' 'timer' %}')"{% endif %}>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xs-6">
-          <h4>Alarm</h4>
-           <!--   <button type="button" class="btn btn-sm {% if email_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="$.ajax('{% url 'toggle-config' 'ALARM' 'email' %}').done(function(){location.reload()}); ">
-                <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
-              </button>-->
-          <button type="button" class="btn btn-sm {% if sound_alarm %}btn-danger{% else %}btn-default{% endif %}" onclick="handle_click(this, '{% url 'toggle-config' 'ALARM' 'sound' %}')">
-            <span class="glyphicon {% if sound_alarm %}glyphicon-volume-up{% else %}glyphicon-volume-off{% endif %}" aria-hidden="true"></span>
-          </button>
-
-        </div>
-
-        <script type="text/javascript">
-        function change_timer_value( obj, link ) {
-          if (parseFloat($('#timer-min').val()) > 0) {
-            // need to also send timer value
-            link = link + $('#timer-min').val() + '/';
-          }
-          $.ajax(link).done(function(){
-            location.reload();
-          });
-        }
-
-        function handle_click( obj, link ) {
-          // disable all buttons
-          $('#'+obj.id).children().each(function(){
-            var $this = $(this);
-            $this.addClass('disabled');
-            $this.prop('disabled',true);
-          });
-          // remove onclick function
-          $('#'+obj.id).attr("onclick","");
-
-          if (obj.id == 'radio_timer' && parseFloat($('#timer-min').val()) > 0) {
-            // need to also send timer value
-            link = link + $('#timer-min').val() + '/';
-          }
-
-          // send to server & reload
-          $.ajax(link).done(function(){
-            location.reload();
-          });
-        }
-        </script>
-
-<!--            <span>T: {{ curr_temp }} °C</span> -->
-        </div>
-
-
-        <div class="row">
-          <div class="col-md-12">
-            <iframe src="http://{{ server_ip }}:6680/" width="100%" height="300px" style="border:0px"></iframe>
-          </div>
-        </div>
-
-
-        <div class="row">
-        <div class="col-sm-6">
-          <h3>Device Logs</h3>
-            <div class="list-group">
-                {% for log in last_logs %}
-                    <span class="list-group-item {% if log.status %} list-group-item-success{% else %} list-group-item-warning{% endif %}">
-                        {{ log.device }}
-                        {% if log.status %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
-                        - <small>{{ log.created }} ({{ log.created|timesince }})</small>
-                    </span>
-                {% endfor %}
-            </div>
-        </div><!-- /.col-sm-4 -->
-        <div class="col-sm-6">
-          <h3>Motion detected</h3>
-          <div class="list-group">
-              {% for d in last_door_opened %}
-                <span class="list-group-item ">
-                  <span class="glyphicon glyphicon-book" aria-hidden="true"></span> door opened at {{ d.created }} ({{ d.created|timesince }})
-                </span>
-              {% endfor %}
-          </div>
-        </div><!-- /.col-sm-4 -->
-      </div>
-
-
-
-      <!--
-      <div class="row">
-        <h3><a href="{% url 'motion-details' %}">Motion detected</a></h3>
-        <div id="motion" style="width:400px;height:250px;"></div>
-      </div>
-      -->
-
-    </div> <!-- /container -->
-
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
     <script src="{% static 'js/jquery-1.11.3.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script>
+ $(function(){ 
+     var navMain = $("#navbar");
+     navMain.on("click", "a", null, function () {
+         navMain.collapse('hide');
+     });
+ });
+</script>
 
   </body>
 </html>

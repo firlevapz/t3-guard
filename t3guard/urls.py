@@ -20,6 +20,7 @@ from . import views
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^$', views.index, name='index'),
+    url(r'^dashboard/$', views.dashboard, name='dashboard'),
     url(r'^temperature_details/$', views.temperature_details, name='temperature-details'),
     url(r'^motion_details/$', views.motion_details, name='motion-details'),
     url(r'^motion_details/(?P<days>[0-9]*)/$', views.motion_details, name='motion-details-days'),

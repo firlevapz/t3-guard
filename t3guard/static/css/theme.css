@@ -1,6 +1,13 @@
+html, body { height: 100% }
+
 body {
-  padding-top: 30px;
-  padding-bottom: 10px;
+  margin: 0px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+.page-header {
+  margin-top:10px;
 }
 
 .theme-dropdown .dropdown-menu {
@@ -15,6 +22,11 @@ body {
 
 .theme-showcase .navbar .container {
   width: auto;
+}
+
+iframe {
+  width: 100%;
+  border: 0px;
 }
 
 .glyphicon-door                   { &:before { content: "\1f6aa"; } }

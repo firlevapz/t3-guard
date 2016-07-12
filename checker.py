@@ -15,18 +15,18 @@ django.setup()
 from t3guard.models import Device, Log, Config, Temperature
 
 # check_pin = 7   # GPIO-Pin nr to check on raspi
-motion_pin = 11 # GPIO-Pin for motion detection
+motion_pin = 7 # GPIO-Pin for motion detection
 # temp_pin = 12 # GPIO-Pin for temperature sensor
-alarm_pin = 15 # GPIO-Pin for triggerin alarm
+alarm_pin = 11 # GPIO-Pin for triggerin alarm
 # temp_wait = 300 # time interval to record temperature
 config_reload = 10 # seconds how often reload the config
 
 device_check_wait = 10*60  # each 10 minutes check for devices
 ping_retry = 3   # how often try to ping device before set inactive
 # check_wait = 1 # check door every 2 seconds
-alarm_delay = 20 # seconds to delay alarm from opening the door
-alarm_time = 5 # seconds how long alarm will sound
-motion_check_wait = 3 # check door every 2 seconds
+alarm_delay = 2 # seconds to delay alarm from opening the door
+alarm_time = 10 # seconds how long alarm will sound
+motion_check_wait = 2 # check door every 2 seconds
 radio_wait = 2  # wait n seconds to react on radio states
 
 pipe_name = '/tmp/t3guard_dhcp_pipe'
@@ -87,7 +87,7 @@ def trigger_alarm():
     # Alarm delay then check again
     time.sleep(alarm_delay)
     # Check again if someone is home now
-    if Device.objects.filter(is_home=True).count() > 0:
+    if Device.objects.filter(is_home=True, authorized=True).count() > 0:
         return # cancel alarm
 
     l = Log(log_type='AL')
@@ -158,22 +158,25 @@ def check_door():
 
 def check_motion():
     """Checks motions in the room with IR-detector"""
-    GPIO.setup(motion_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    #GPIO.setup(motion_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.setup(motion_pin, GPIO.IN)
 
     while not stop_threads.isSet():
         curr_state = GPIO.input(motion_pin)
-        if curr_state:
-            l = Log(status=curr_state, log_type='MO')
-            l.save()
+        if curr_state and Device.objects.filter(is_home=True, authorized=True).count() == 0:
+#            l = Log(status=curr_state, log_type='MO')
+#            l.save()
 
 #           could trigger also alarm here if no phone is present
-#            if curr_state == 0 and Device.objects.filter(is_home=True).count() == 0:
+#            if curr_state == 0 and Device.objects.filter(is_home=True, authorized=True).count() == 0:
                 # Door opened and nobody at home!
-#                alarm_thread = threading.Thread(target=trigger_alarm)
-#                alarm_thread.daemon = True
-#                alarm_thread.start()
+            #alarm_thread = threading.Thread(target=trigger_alarm)
+            #alarm_thread.daemon = True
+            #alarm_thread.start()
 
- #           Device.objects.filter(is_home=True).order_by('-modified')
+            trigger_alarm()
+
+#           Device.objects.filter(is_home=True).order_by('-modified')
 
         time.sleep(motion_check_wait)
 
@@ -237,9 +240,9 @@ if __name__ == '__main__':
     dhcp_thread.daemon = True
     dhcp_thread.start()
 
-    #motion_thread = threading.Thread(target=check_motion)
-    #motion_thread.daemon = True
-    #motion_thread.start()
+    motion_thread = threading.Thread(target=check_motion)
+    motion_thread.daemon = True
+    motion_thread.start()
 
     # temp_thread = threading.Thread(target=log_temp)
     # temp_thread.daemon = True
