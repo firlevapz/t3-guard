@@ -161,7 +161,7 @@
                     <span class="list-group-item {% if log.status %} list-group-item-success{% else %} list-group-item-warning{% endif %}">
                         {{ log.device }}
                         {% if log.status %}<span class="glyphicon glyphicon-home" aria-hidden="true"></span>{% else %}<span class="glyphicon glyphicon-plane" aria-hidden="true"></span>{% endif %}
-                        - <small>{{ log.created }} ({{ log.created|timesince }})</small>
+                        - <small>{{ log.created }} {{ log.text }}</small>
                     </span>
                 {% endfor %}
             </div>

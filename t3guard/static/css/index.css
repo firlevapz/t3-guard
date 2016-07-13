@@ -7,7 +7,7 @@ iframe {
     display: block;    
     margin-top: 50px;
     border: 0;
-    height: calc(100vh - 55px);
+    height: 600px;
     width: 100%;
     overflow:hidden;
 }

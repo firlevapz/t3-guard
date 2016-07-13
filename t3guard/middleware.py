@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login
+from models import Device, Log
 
 class MobileClientLoginMiddleware:
     def process_request(self, request):
@@ -10,6 +11,14 @@ class MobileClientLoginMiddleware:
              user = authenticate(username='admin', password='admin')
              if user and user.is_active:
                  login(request, user)
+
+        # check for lost devices when web interface is opened...
+        for d in Device.objects.filter(ip=request.META.get('REMOTE_ADDR'), authorized=True, is_home=False):
+            d.is_home = True
+            d.save()
+            l = Log(device=d, status=True, log_type='DE', text='(django)')
+            l.save()
+
 
 
 class CorsMiddleware:

@@ -198,10 +198,12 @@ def check_motion():
         curr_state = GPIO.input(motion_pin)
         if curr_state:
             # check state once more, to avoid wrong alarms...
-            time.sleep(0.1)
-            curr_state = GPIO.input(motion_pin)
+            for i in range(0, 5):
+                time.sleep(0.1)
+                curr_state = GPIO.input(motion_pin)
+
             if curr_state and Device.objects.filter(is_home=True, authorized=True).count() == 0:
-                if Config.objects.get(config_type='ALARM', enabled=True).count() > 0:
+                if Config.objects.filter(config_type='ALARM', enabled=True).count() > 0:
                     trigger_alarm()
         time.sleep(motion_check_wait)
 
@@ -229,29 +231,32 @@ def dhcp_pipe_reader():
         with open(pipe_name, 'r') as pipe:
             line = pipe.readline()[:-1]   # get line except \n at end
             line = line.split(' ')        # split up by ' ' in chunks
+            #print(line)
             cmd = line[0]
-            if cmd == 'old' or cmd == 'add':
-                mac = line[1]
-                ip = line[2]
-                hostname = line[3]
+            mac = line[1]
+            ip = line[2]
+            hostname = line[3]
 
-                d, created = Device.objects.get_or_create(mac=mac)
-                if created:
-                    d.ip = ip
-                    d.name = hostname
-                    d.save()
-                elif d.authorized:
+            d, created = Device.objects.get_or_create(mac=mac)
+            d.ip = ip
+            if created:
+                d.name = hostname
+                d.save()
+            elif d.authorized:
+                if cmd == 'add' or cmd == 'old':
                     d.is_home = True
-                    d.save()
-                    l = Log(device=d, status=True, log_type='DE', text='(dhcp)')
-                    l.save()
+                else:
+                    d.is_home = False
+                d.save()
+                l = Log(device=d, status=d.is_home, log_type='DE', text='(dhcp)')
+                l.save()
 
 
 if __name__ == '__main__':
     # Start different threads
-    device_thread = threading.Thread(target=check_devices)
-    device_thread.daemon = True
-    device_thread.start()
+    #device_thread = threading.Thread(target=check_devices)
+    #device_thread.daemon = True
+    #device_thread.start()
 
     radio_thread = threading.Thread(target=radio_control)
     radio_thread.daemon = True
